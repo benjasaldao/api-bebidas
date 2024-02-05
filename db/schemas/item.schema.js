@@ -1,4 +1,5 @@
 const { Schema } = require("mongoose");
+const productSchema = require("./product.schema");
 
 const itemSchema = new Schema({
     amount: {
@@ -9,6 +10,7 @@ const itemSchema = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
     },
+    product: productSchema,
     createAt: {
         type: Date,
         default: Date.now(),

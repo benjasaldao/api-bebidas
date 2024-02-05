@@ -13,7 +13,7 @@ const productSchema = new Schema({
     description: {
         type: String,
     },
-    category: {
+    categoryId: {
         type: Schema.Types.ObjectId,
         required: true,
     },

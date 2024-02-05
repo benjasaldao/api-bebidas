@@ -34,7 +34,7 @@ router.get(
     try {
       const { id } = req.params;
       const category = await service.findOne(id);
-      res.json(category);
+      res.json(category[0]);
     } catch (error) {
       next(error);
     }
@@ -49,8 +49,7 @@ router.post(
   validatorHandler(createCategorySchema, "body"),
   async (req, res, next) => {
     try {
-      const body = req.body;
-      const newCategory = await service.create(body);
+      const newCategory = await service.create(req);
       res.status(201).json(newCategory);
     } catch (error) {
       next(error);

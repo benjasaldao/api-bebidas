@@ -38,7 +38,7 @@ router.get(
     try {
       const { id } = req.params;
       const user = await service.findById(id);
-      res.json(user);
+      res.json(user[0]);
     } catch (error) {
       next(error);
     }

@@ -2,6 +2,7 @@ const boom = require("@hapi/boom");
 const bcrypt = require("bcrypt");
 
 const { userModel } = require("../db/models");
+const { default: mongoose } = require("mongoose");
 
 class UserService {
   async findAll() {
@@ -24,7 +25,18 @@ class UserService {
 
   async findById(id) {
     try {
-      const user = await userModel.findById(id);
+      const userId = new mongoose.Types.ObjectId(id);
+      const user = await userModel.aggregate([
+        { $match: { _id: userId } },
+        {
+          $lookup: {
+            from: "adresses",
+            foreignField: "userId",
+            localField: "_id",
+            as: "adresses",
+          },
+        },
+      ]);
       return user;
     } catch (error) {
       throw error;

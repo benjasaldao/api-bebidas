@@ -1,5 +1,6 @@
 const boom = require("@hapi/boom");
 const { purchaseModel } = require("../db/models");
+const { default: mongoose } = require("mongoose");
 
 class PurchaseService {
   async create(body) {
@@ -23,7 +24,7 @@ class PurchaseService {
 
   async findOne(id) {
     try {
-      const purchase = purchaseModel.findById(id);
+      const purchase = await purchaseModel.findById(id);
       return purchase;
     } catch (error) {
       throw error;

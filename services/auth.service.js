@@ -1,20 +1,19 @@
-const boom = require('@hapi/boom');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const boom = require("@hapi/boom");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 
-const { config } = require('./../config/config');
-const UserService = require('./user.service');
+const { config } = require("./../config/config");
+const UserService = require("./user.service");
 const userService = new UserService();
 
 class AuthService {
-
   async getUser(email, password) {
     const user = await userService.findByEmail(email);
     if (!user) {
       throw boom.unauthorized();
     }
-    
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       throw boom.unauthorized();
@@ -24,13 +23,13 @@ class AuthService {
 
   signToken(user) {
     const payload = {
-      sub: user.id,
-      role: user.role
-    }
+      sub: user._id,
+      role: user.role,
+    };
     const token = jwt.sign(payload, config.jwtSecret);
     return {
       user,
-      token
+      token,
     };
   }
 
@@ -39,16 +38,18 @@ class AuthService {
     if (!user) {
       throw boom.unauthorized();
     }
-    const payload = { sub: user.id };
-    const token = jwt.sign(payload, config.recoveryJwtSecret, {expiresIn: '15min'});
+    const payload = { sub: user._id };
+    const token = jwt.sign(payload, config.recoveryJwtSecret, {
+      expiresIn: "15min",
+    });
     const link = `${url}/${token}`;
-    await userService.update(user.id, {recoveryToken: token});
+    await userService.update(user.id, { recoveryToken: token });
     const mail = {
       from: config.smtpEmail,
       to: `${user.email}`,
       subject: "Email para recuperar contraseña",
       html: `<b>Ingresa a este link => ${link}</b>`,
-    }
+    };
     const rta = await this.sendMail(mail);
     return rta;
   }
@@ -56,13 +57,16 @@ class AuthService {
   async changePassword(token, newPassword) {
     try {
       const payload = jwt.verify(token, config.recoveryJwtSecret);
-      const user = await userService.findOne(payload.sub);
-      if (user.recoveryToken !== token) {
+      const user = await userService.findById(payload.sub);
+      if (user[0].recoveryToken != token) {
         throw boom.unauthorized();
       }
       const hash = await bcrypt.hash(newPassword, 10);
-      await userService.update(user.id, {recoveryToken: null, password: hash});
-      return { message: 'password changed' };
+      await userService.update(user[0]._id, {
+        recoveryToken: null,
+        password: hash,
+      });
+      return { message: "password changed" };
     } catch (error) {
       throw boom.unauthorized();
     }
@@ -75,11 +79,11 @@ class AuthService {
       port: 465,
       auth: {
         user: config.smtpEmail,
-        pass: config.smtpPassword
-      }
+        pass: config.smtpPassword,
+      },
     });
     await transporter.sendMail(infoMail);
-    return { message: 'mail sent' };
+    return { message: "mail sent" };
   }
 }
 

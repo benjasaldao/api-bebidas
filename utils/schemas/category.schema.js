@@ -7,7 +7,7 @@ const imageId = Joi.string();
 
 const createCategorySchema = Joi.object({
   name: name.required(),
-  imageUrl: imageUrl.required(),
+  imageUrl: imageUrl,
   imageId: imageId,
 });
 

@@ -6,18 +6,17 @@ const multer = require("multer");
 const path = require("path");
 const { config } = require("./config/config");
 
-// const {
-//   logErrors,
-//   errorHandler,
-//   boomErrorHandler,
-//   ormErrorHandler,
-// } = require("./middlewares/errorHandler");
+const {
+  logErrors,
+  errorHandler,
+  boomErrorHandler,
+} = require("./middlewares/errorHandler");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-// app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false }));
 const storage = multer.diskStorage({
   destination: path.join(__dirname, "public/files"),
   filename: (req, file, cb, filename) => {
@@ -42,10 +41,9 @@ require("./utils/auth");
 
 routerApi(app);
 
-// app.use(logErrors);
-// app.use(ormErrorHandler);
-// app.use(boomErrorHandler);
-// app.use(errorHandler);
+app.use(logErrors);
+app.use(boomErrorHandler);
+app.use(errorHandler);
 
 mongoose
   .connect(config.mongodbUri)

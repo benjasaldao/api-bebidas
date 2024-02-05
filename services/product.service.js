@@ -2,6 +2,7 @@ const boom = require("@hapi/boom");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs-extra");
 const { productModel } = require("../db/models");
+const { default: mongoose } = require("mongoose");
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -22,7 +23,7 @@ class ProductsService {
         price: body.price,
         stock: body.stock,
         description: body.description,
-        category: body.category,
+        categoryId: body.categoryId,
       };
 
       if (file) {
@@ -54,7 +55,16 @@ class ProductsService {
     }
 
     try {
-      const products = await productModel.find();
+      const products = await productModel.aggregate([
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+      ]);
       return products;
     } catch (error) {
       throw error;
@@ -63,7 +73,19 @@ class ProductsService {
 
   async findOne(id) {
     try {
-      const product = await productModel.findById(id);
+      const productId = new mongoose.Types.ObjectId(id);
+
+      const product = await productModel.aggregate([
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+        { $match: { _id: productId } },
+      ]);
 
       if (!product) {
         throw boom.notFound("Product no found");
@@ -104,7 +126,10 @@ class ProductsService {
 
   async delete(id) {
     try {
-      const product = await productModel.deleteOne({ _id: id });
+      const product = await productModel.findByIdAndDelete(id);
+      if (product.imageId !== "null") {
+        await cloudinary.uploader.destroy(product.imageId);
+      }
       return product;
     } catch (error) {
       throw error;
